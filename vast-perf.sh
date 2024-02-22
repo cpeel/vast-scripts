@@ -72,7 +72,7 @@ TEST="read_bw" # one of 'write_bw' , 'read_bw', 'write_iops' , 'read_iops' , 'cl
 RUNTIME=120 # runtime in seconds of the test.
 JOBS=8 # how many threads per host. This will also result in N mountpoints per host.
 SIZE="20g" # size of each file, one per thread.
-BLOCKSIZE="1mb" #leave alone for max b/w. Note that this only applies to the b/w tests, for iops tests it will be 4kb (hardcoded)
+BLOCKSIZE="1m" #leave alone for max b/w. Note that this only applies to the b/w tests, for iops tests it will be 4kb (hardcoded)
 MIX=100 # only applicable if TEST="mix_bw" or "mix_iops"
 POOL=1 # what pool to run on, typically this will be '1', but check!
 PROTO="tcp" #rdma or tcp.  When in doubt, use tcp
@@ -213,9 +213,11 @@ multipath_func () {
 write_bw_test () {
   if [ -z ${RUNTIMEWRITE} ]; then
     #didn't specify runtime, so just create files of size specified
-    ${FIO_BIN} --name=randrw --ioengine=${ioengine} --refill_buffers --create_serialize=0 --randrepeat=0 --create_on_open=1 --fallocate=none --iodepth=${iodepth} --rw=randrw --bs=1mb --direct=${DIRECT} --size=${SIZE} --numjobs=${JOBS} --rwmixread=0 --group_reporting --directory=${DIRS}
+  #  ${FIO_BIN} --name=randrw --ioengine=${ioengine} --refill_buffers --create_serialize=0 --randrepeat=0 --create_on_open=1 --fallocate=none --iodepth=${iodepth} --rw=randrw --bs=1mb --direct=${DIRECT} --size=${SIZE} --numjobs=${JOBS} --rwmixread=0 --group_reporting --directory=${DIRS}
+    /home/vastdata/elbencho --write --rand --mkdirs --block ${BLOCKSIZE} --size ${SIZE} --threads ${JOBS} --iodepth ${iodepth} --direct $(echo ${DIRS} | sed 's/:/ /g')
   else
-    ${FIO_BIN} --name=randrw --ioengine=${ioengine} --refill_buffers --create_serialize=0 --randrepeat=0 --create_on_open=1 --fallocate=none --iodepth=${iodepth} --rw=randrw --bs=1mb --direct=${DIRECT} --size=${SIZE} --numjobs=${JOBS} --rwmixread=0 --group_reporting --directory=${DIRS} --time_based=1 --runtime=${RUNTIME}
+  #  ${FIO_BIN} --name=randrw --ioengine=${ioengine} --refill_buffers --create_serialize=0 --randrepeat=0 --create_on_open=1 --fallocate=none --iodepth=${iodepth} --rw=randrw --bs=1mb --direct=${DIRECT} --size=${SIZE} --numjobs=${JOBS} --rwmixread=0 --group_reporting --directory=${DIRS} --time_based=1 --runtime=${RUNTIME}
+    /home/vastdata/elbencho --write --rand --mkdirs --block ${BLOCKSIZE} --size ${SIZE} --threads ${JOBS} --iodepth ${iodepth} --timelimit=${RUNTIME} --direct $(echo ${DIRS} | sed 's/:/ /g')
   fi
 }
 
@@ -223,13 +225,16 @@ seq_write_test () {
   if [ -z ${RUNTIMEWRITE} ]; then
     #didn't specify runtime, so just create files of size specified
     ${FIO_BIN} --name=randrw --ioengine=${ioengine} --refill_buffers --create_serialize=0 --randrepeat=0 --create_on_open=1 --fallocate=none --iodepth=${iodepth} --rw=write --bs=1mb --direct=${DIRECT} --size=${SIZE} --numjobs=${JOBS} --group_reporting --directory=${DIRS}
+    /home/vastdata/elbencho --write --mkdirs --block ${BLOCKSIZE} --size ${SIZE} --threads ${JOBS} --iodepth ${iodepth} --direct $(echo ${DIRS} | sed 's/:/ /g')
   else
     ${FIO_BIN} --name=randrw --ioengine=${ioengine} --refill_buffers --create_serialize=0 --randrepeat=0 --create_on_open=1 --fallocate=none --iodepth=${iodepth} --rw=write --bs=1mb --direct=${DIRECT} --size=${SIZE} --numjobs=${JOBS} --group_reporting --directory=${DIRS} --time_based=1 --runtime=${RUNTIME}
+    /home/vastdata/elbencho --write --mkdirs --block ${BLOCKSIZE} --size ${SIZE} --threads ${JOBS} --iodepth ${iodepth} --timelimit=${RUNTIME} --direct $(echo ${DIRS} | sed 's/:/ /g')
   fi
 }
 
 read_bw_test () {
-  ${FIO_BIN} --name=randrw --ioengine=${ioengine} --iodepth=${iodepth} --rw=randread --bs=${BLOCKSIZE} --direct=${DIRECT} --size=${SIZE} --numjobs=${JOBS} --group_reporting --directory=${DIRS} --time_based=1 --runtime=${RUNTIME} $EXTRA_FIO_ARGS
+  /home/vastdata/elbencho --read --rand --mkdirs --block ${BLOCKSIZE} --size ${SIZE} --threads ${JOBS} --iodepth ${iodepth} --timelimit=${RUNTIME} --direct $(echo ${DIRS} | sed 's/:/ /g')
+  #${FIO_BIN} --name=randrw --ioengine=${ioengine} --iodepth=${iodepth} --rw=randread --bs=${BLOCKSIZE} --direct=${DIRECT} --size=${SIZE} --numjobs=${JOBS} --group_reporting --directory=${DIRS} --time_based=1 --runtime=${RUNTIME} $EXTRA_FIO_ARGS
 }
 
 
